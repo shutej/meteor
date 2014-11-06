@@ -15,7 +15,11 @@ if [ "$UNAME" == "Linux" ] ; then
         else
             echo "Unsupported architecture: $ARCH"
             echo "Meteor only supports i686 and x86_64 or universal for now."
-            echo "To use universal architecture make sure that node and mongo packages are pre-installed."
+            echo "To use universal architecture make sure that the necessary binaries are pre-installed."
+            # get status of installed binaries
+            for TEST_PACKAGE in node npm mongo mongod ; do
+              echo -e "\tcheck $TEST_PACKAGE: \c"; [[ "$(which $TEST_PACKAGE)" != "" ]] && echo "ok" || echo "fail"
+            done
             exit 1
         fi
     fi
