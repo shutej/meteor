@@ -38,36 +38,52 @@ fi
 
 cd "$DIR"
 
-S3_HOST="s3.amazonaws.com/com.meteor.jenkins"
+# Check if have to build on universal architecture
+if [ "$ARCH" != "universal" ] ; then
 
-# Update these values after building the dev-bundle-node Jenkins project.
-NODE_BUILD_NUMBER=8
-NODE_VERSION=0.10.33
-NODE_TGZ="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
-if [ -f "${CHECKOUT_DIR}/${NODE_TGZ}" ] ; then
-    tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
+    S3_HOST="s3.amazonaws.com/com.meteor.jenkins"
+
+    # Update these values after building the dev-bundle-node Jenkins project.
+    NODE_BUILD_NUMBER=8
+    NODE_VERSION=0.10.33
+    NODE_TGZ="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
+    if [ -f "${CHECKOUT_DIR}/${NODE_TGZ}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
+    else
+        NODE_URL="http://${S3_HOST}/dev-bundle-node-${NODE_BUILD_NUMBER}/${NODE_TGZ}"
+        echo "Downloading Node from ${NODE_URL}"
+        curl "${NODE_URL}" | tar zx
+    fi
+
+    # Update these values after building the dev-bundle-mongo Jenkins project.
+    MONGO_BUILD_NUMBER=3
+    MONGO_VERSION=2.4.12
+    MONGO_TGZ="mongo_${PLATFORM}_v${MONGO_VERSION}.tar.gz"
+    if [ -f "${CHECKOUT_DIR}/${MONGO_TGZ}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ}"
+    else
+        MONGO_URL="http://${S3_HOST}/dev-bundle-mongo-${MONGO_BUILD_NUMBER}/${MONGO_TGZ}"
+        echo "Downloading Mongo from ${MONGO_URL}"
+        curl "${MONGO_URL}" | tar zx
+    fi
+
+    cd "$DIR/build"
+
 else
-    NODE_URL="http://${S3_HOST}/dev-bundle-node-${NODE_BUILD_NUMBER}/${NODE_TGZ}"
-    echo "Downloading Node from ${NODE_URL}"
-    curl "${NODE_URL}" | tar zx
-fi
 
-# Update these values after building the dev-bundle-mongo Jenkins project.
-MONGO_BUILD_NUMBER=3
-MONGO_VERSION=2.4.12
-MONGO_TGZ="mongo_${PLATFORM}_v${MONGO_VERSION}.tar.gz"
-if [ -f "${CHECKOUT_DIR}/${MONGO_TGZ}" ] ; then
-    tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ}"
-else
-    MONGO_URL="http://${S3_HOST}/dev-bundle-mongo-${MONGO_BUILD_NUMBER}/${MONGO_TGZ}"
-    echo "Downloading Mongo from ${MONGO_URL}"
-    curl "${MONGO_URL}" | tar zx
-fi
+    # link to pre-installed binaries on universal build
+    mkdir -p "$DIR/bin"
+    ln -s "$(which node)" "$DIR/bin"
+    ln -s "$(which npm)" "$DIR/bin"
+    mkdir -p "$DIR/mongodb/bin"
+    ln -s "$(which mongo)" "$DIR/mongodb/bin"
+    ln -s "$(which mongod)" "$DIR/mongodb/bin/mongod"
 
-cd "$DIR/build"
+fi
 
 # export path so we use our new node for later builds
 export PATH="$DIR/bin:$PATH"
+
 which node
 which npm
 
@@ -115,6 +131,7 @@ node "${CHECKOUT_DIR}/scripts/dev-bundle-tool-package.js" >package.json
 npm install
 # Refactor node modules to top level and remove unnecessary duplicates.
 npm dedupe
+mkdir -p "${DIR}/lib/node_modules/"
 cp -R node_modules/* "${DIR}/lib/node_modules/"
 
 cd "${DIR}/lib"
@@ -167,14 +184,19 @@ popd
 cd "$DIR/lib/node_modules/fibers/bin"
 shrink_fibers
 
-# Download BrowserStackLocal binary.
-BROWSER_STACK_LOCAL_URL="http://browserstack-binaries.s3.amazonaws.com/BrowserStackLocal-07-03-14-$OS-$ARCH.gz"
+# Check if have to build on universal architecture
+if [ "$ARCH" != "universal" ] ; then
 
-cd "$DIR/build"
-curl -O $BROWSER_STACK_LOCAL_URL
-gunzip BrowserStackLocal*
-mv BrowserStackLocal* BrowserStackLocal
-mv BrowserStackLocal "$DIR/bin/"
+    # Download BrowserStackLocal binary.
+    BROWSER_STACK_LOCAL_URL="http://browserstack-binaries.s3.amazonaws.com/BrowserStackLocal-07-03-14-$OS-$ARCH.gz"
+
+    cd "$DIR/build"
+    curl -O $BROWSER_STACK_LOCAL_URL
+    gunzip BrowserStackLocal*
+    mv BrowserStackLocal* BrowserStackLocal
+    mv BrowserStackLocal "$DIR/bin/"
+
+fi
 
 echo BUNDLING
 
