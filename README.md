@@ -1,3 +1,11 @@
+# Attention - highly recommend to update branch
+
+In case of fixed security issues as well as several performance and maintainability improvements you should update your meteor at least to release 1.0.2.1.
+
+Checkout the universal builder from branch release-1.0.2.1-universal or newer.
+
+---
+
 # Meteor
 
 ## run yet unsupported architectures
