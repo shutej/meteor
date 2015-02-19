@@ -15,6 +15,8 @@ With Meteor you write apps:
 
 Documentation is available at http://docs.meteor.com/
 
+Get additional information and hints to run nodejs and meteor on yet not official supported architectures at http://meteor-universal.tumblr.com/  
+
 ## Slow Start if looking for an universal bundle
 
 If you want to run on the bleeding edge, you
@@ -51,7 +53,7 @@ the app:
 
 You'll then be able to read the docs locally in your browser at
 
-    `http://localhost:3000/`
+    http://localhost:3000/
 
 Note that if you run Meteor from a git checkout, you cannot pin apps to specific
 Meteor releases or run using different Meteor releases using `--release`.
