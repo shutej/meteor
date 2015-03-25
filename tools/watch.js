@@ -258,7 +258,7 @@ var readDirectory = function (options) {
       // We do stat instead of lstat here, so that we treat symlinks to
       // directories just like directories themselves.
       // XXX Does the treatment of symlinks make sense?
-      var stats = files.lstat(files.pathJoin(options.absPath, entry));
+      var stats = files.stat(files.pathJoin(options.absPath, entry));
     } catch (e) {
       if (e && (e.code === 'ENOENT')) {
         // Disappeared after the readdir (or a dangling symlink)? Eh,
