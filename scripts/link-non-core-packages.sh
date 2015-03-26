@@ -13,17 +13,16 @@ if [ -d "non-core" ]; then
   cd non-core
 
   # link all ./packages/non-core/pkg to ./packages/pkg
-  for pkg in $(find . -mindepth 1 -maxdepth 1 -type d); do
+  for pkg in $(ls -d *); do
     if [ -L "../${pkg}" ]; then
       echo "Package ${pkg} is already linked."
     elif [ -e "../${pkg}" ] || [ -d "../${pkg}" ]; then
       echo "Package ${pkg} does already exist."
-    else
-      ln -s "${pkg}" ..
+    elif [ -L "${pkg}" ] || [ -d "${pkg}" ]; then
+      # link only if folder oder sym-link detected
+      ln -s "non-core/${pkg}" "../${pkg}"
       echo "Package ${pkg} linked."
     fi
   done
 
 fi
-
-popd  >/dev/null 2>&1
