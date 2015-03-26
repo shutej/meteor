@@ -5,12 +5,25 @@ set -u
 
 UNAME=$(uname)
 ARCH=$(uname -m)
+UNIVERSAL_ARCH=
 
 if [ "$UNAME" == "Linux" ] ; then
     if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
-        echo "Unsupported architecture: $ARCH"
-        echo "Meteor only supports i686 and x86_64 for now."
-        exit 1
+        # test for platform installed binaries
+        if [ "$(which node)" != "" -a "$(which npm)" != "" -a "$(which mongo)" != "" -a "$(which mongod)" != "" ] ; then
+            # we are using installation for platform installed binaries
+            ARCH="${ARCH}_universal"
+            UNIVERSAL_ARCH=$(uname -a)
+        else
+            echo "Unsupported architecture: $ARCH"
+            echo "Meteor only supports i686 and x86_64 or universal for now."
+            echo "To use universal architecture make sure that the necessary binaries are pre-installed."
+            # get status of installed binaries
+            for TEST_PACKAGE in node npm mongo mongod ; do
+              echo -e "\tcheck $TEST_PACKAGE: \c"; [[ "$(which $TEST_PACKAGE)" != "" ]] && echo "ok" || echo "fail"
+            done
+            exit 1
+        fi
     fi
 
     OS="linux"
