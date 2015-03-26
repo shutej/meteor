@@ -10,6 +10,8 @@ if [ "$UNAME" != "Linux" -a "$UNAME" != "Darwin" ] ; then
     exit 1
 fi
 
+UNIVERSAL_ARCH=
+
 if [ "$UNAME" = "Darwin" ] ; then
     if [ "i386" != "$(uname -p)" -o "1" != "$(sysctl -n hw.cpu64bit_capable 2>/dev/null || echo 0)" ] ; then
 
@@ -22,9 +24,21 @@ if [ "$UNAME" = "Darwin" ] ; then
 elif [ "$UNAME" = "Linux" ] ; then
     ARCH="$(uname -m)"
     if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
-        echo "Unsupported architecture: $ARCH"
-        echo "Meteor only supports i686 and x86_64 for now."
-        exit 1
+        # test for platform installed binaries
+        if [ "$(which node)" != "" -a "$(which npm)" != "" -a "$(which mongo)" != "" -a "$(which mongod)" != "" ] ; then
+            # we are using installation for platform installed binaries
+            ARCH="${ARCH}_universal"
+            UNIVERSAL_ARCH=$(uname -a)
+        else
+            echo "Unsupported architecture: $ARCH"
+            echo "Meteor only supports i686 and x86_64 or universal for now."
+            echo "To use universal architecture make sure that the necessary binaries are pre-installed."
+            # get status of installed binaries
+            for TEST_PACKAGE in node npm mongo mongod ; do
+                echo -e "\tcheck $TEST_PACKAGE: \c"; [[ "$(which $TEST_PACKAGE)" != "" ]] && echo "ok" || echo "fail"
+            done
+            exit 1
+        fi
     fi
 fi
 PLATFORM="${UNAME}_${ARCH}"
@@ -73,6 +87,19 @@ function install_dev_bundle {
     if [ -f "$SCRIPT_DIR/$TARBALL" ] ; then
         echo "Skipping download and installing kit from $SCRIPT_DIR/$TARBALL" >&2
         tar -xzf "$SCRIPT_DIR/$TARBALL" -C "$BUNDLE_TMPDIR"
+    elif [ "${UNIVERSAL_ARCH}" != "" ] ; then
+        # test if there is some manually downloaded pre-build from universal releases
+        TARBALL_ARM=$(find "$SCRIPT_DIR" -mindepth 1 -maxdepth 1 -type f -name "dev_bundle_${PLATFORM}_*_${BUNDLE_VERSION}.tar.gz" | head -n 1)
+        if [ -f "$TARBALL_ARM" ] ; then
+            echo "Skipping download and installing kit from $(basename $TARBALL_ARM)" >&2
+            tar -xzf "$TARBALL_ARM" -C "$BUNDLE_TMPDIR"
+        else
+            echo "There is currently no automatic detection of pre-build ARM bundles."
+            echo "Check https://github.com/4commerce-technologies-AG/meteor/releases"
+            echo "to find and download a suitable pre-build for your architecture."
+            echo "In any way, you may generate your own dev-bundle using"
+            echo "scripts/generate-dev-bundle.sh"
+        fi
     elif [ -n "$SAVE_DEV_BUNDLE_TARBALL" ] ; then
         # URL duplicated in tools/server/target.sh.in
         curl -# "$DEV_BUNDLE_URL_ROOT$TARBALL" >"$SCRIPT_DIR/$TARBALL"
