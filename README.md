@@ -45,11 +45,11 @@ appendix _Pre-builds for ARM_.
 
 ##### non-core packages
 
-After checkout there are some not linked non-core packages like e.g. `npm-bcrypt`.
-You should add a link to the overall packages list unless you have a special concern.
+After checkout there are some non-core packages not available like e.g. `npm-bcrypt`.
+This fork sets the ENV VAR `PACKAGE_DIRS` to include the non-core packages automatically.
+If you have a special concern you have to set this ENV VAR with your preferred values
+before calling meteor. In that case the meteor starter will NOT add the non-core packages.
 Some meteor examples and applications may not work properly without those packages.
-
-    ./scripts/link-non-core-packages.sh
 
 If interested in details you find some more information about non-core packages at 
 [meteor universal blog](http://meteor-universal.tumblr.com/post/111435518849/use-non-core-packages-for-your-meteor-apps)
