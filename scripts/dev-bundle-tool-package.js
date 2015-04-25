@@ -38,6 +38,7 @@ var packageJson = {
     sqlite3: "3.0.2",
     netroute: "0.2.5",
     phantomjs: "1.9.12",
+    eventemitter3: "0.1.6",
     "http-proxy": "1.6.0",
     "wordwrap": "0.0.2",
     "moment": "2.8.4",
