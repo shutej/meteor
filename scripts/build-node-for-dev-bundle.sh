@@ -17,7 +17,11 @@ git clone --branch "v${NODE_VERSION}-with-npm-5821" --depth 1 \
     https://github.com/meteor/node.git
 cd node
 rm -rf .git
-./configure --prefix="$DIR"
+if [ "$METEOR_UNIVERSAL_FLAG" == "ARM" ] ; then
+  ./configure --without-snapshot --prefix="$DIR"
+else
+  ./configure --prefix="$DIR"
+fi
 make -j4
 make install PORTABLE=1
 # PORTABLE=1 is a node hack to make npm look relative to itself instead
