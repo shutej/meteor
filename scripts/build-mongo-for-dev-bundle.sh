@@ -42,7 +42,13 @@ rm -rf .git
 
 # Compile
 
-MONGO_FLAGS="--ssl --release -j4 "
+# check number of cores for parallelism flag
+if [ "$NPROCESSORS" -lt "4" ] ; then
+    MONGO_FLAGS="--ssl --release -j1 "
+else
+    MONGO_FLAGS="--ssl --release -j4 "
+fi
+
 MONGO_FLAGS+="--cpppath=$DIR/build/openssl-out/include --libpath=$DIR/build/openssl-out/lib "
 
 if [ "$OS" == "osx" ]; then
