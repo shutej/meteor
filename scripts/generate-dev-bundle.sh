@@ -224,16 +224,26 @@ INSTALLED_NPM_VERSION=$(cat "$DIR/lib/node_modules/npm/package.json" |
 xargs -0 node -e "console.log(JSON.parse(process.argv[1]).version)")
 if [ "$INSTALLED_NPM_VERSION" != "1.4.28" ]; then
   echo "Unexpected NPM version in lib/node_modules: $INSTALLED_NPM_VERSION"
-  echo "We will be replacing it with our own version because the bundled node"
-  echo "is built using PORTABLE=1, which makes npm look for node relative to"
-  echo "its own directory."
-  echo "Update this check if you know what you're doing."
-  exit 1
+
+  # Check if run for universal architecture
+  if [ -z "$METEOR_UNIVERSAL_FLAG" ] ; then
+    echo "We will be replacing it with our own version because the bundled node"
+    echo "is built using PORTABLE=1, which makes npm look for node relative to"
+    echo "its own directory."
+    echo "Update this check if you know what you're doing."
+    exit 1
+  else
+    echo "This is just a WARNING on universal bundler."
+    echo "Make sure that your used npm version is at least: 1.4.28"
+  fi
 fi
 
 # Overwrite lib/modules/npm with bundled npm from temporary directory
-rm -rf "$DIR/lib/node_modules/npm"
-mv -f "$DIR/bundled-npm" "$DIR/lib/node_modules/npm"
+# only if bundled-npm was downloaded by non universal meteor pre-build
+if [ -d "$DIR/bundled-npm" ]; then
+    rm -rf "$DIR/lib/node_modules/npm"
+    mv -f "$DIR/bundled-npm" "$DIR/lib/node_modules/npm"
+fi
 
 echo BUNDLING
 
