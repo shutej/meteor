@@ -11,6 +11,11 @@ if (process.platform === "win32") {
   // with the thread counts on Windows.
   // Duplicated in dev-bundle-server-package.js
   fibersVersion = "https://github.com/meteor/node-fibers/tarball/d519f0c5971c33d99c902dad346b817e84bab001";
+} else if (process.arch === "arm") {
+  // We have another fork of fibers of meteor fork version 1.0.5
+  // that prevents segmentation faults on arm architectures while running fast loops 
+  // Duplicated in dev-bundle-server-package.js
+  fibersVersion = "https://github.com/4commerce-technologies-AG/node-fibers/tarball/6ad04e2ee410282f798381868524ca178591dc1f";
 } else {
   fibersVersion = "1.0.5";
 }
