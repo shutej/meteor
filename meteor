@@ -192,6 +192,13 @@ if [ "$METEOR_UNIVERSAL_FLAG" == "ENV" ] ; then
 fi
 
 
+# set ENV VAR and include non-core packages per default if $PACKAGE_DIRS
+# is not set already
+if [ -z "$PACKAGE_DIRS" ] && [ -d "$SCRIPT_DIR/packages/non-core" ] ; then
+  export PACKAGE_DIRS=$SCRIPT_DIR/packages/non-core
+fi
+
+
 # We used to set $NODE_PATH here to include the node_modules from the dev
 # bundle, but now we just get them from the symlink at tools/node_modules. This
 # is better because node_modules directories found via the ancestor walk from
