@@ -178,15 +178,15 @@ cd "${DIR}/lib"
 # Clean up some bulky stuff.
 cd node_modules
 
-# Used to delete bulky subtrees. It's an error (unlike with rm -rf) if they
+# Used to delete bulky subtrees. It's not an error anymore but WARNING if they
 # don't exist, because that might mean it moved somewhere else and we should
 # update the delete line.
 delete () {
     if [ ! -e "$1" ]; then
-        echo "Missing (moved?): $1"
-        exit 1
+        echo "WARNING! Nothing to clean anymore. Missing or moved?: $1"
+    else
+        rm -rf "$1"
     fi
-    rm -rf "$1"
 }
 
 delete browserstack-webdriver/docs
