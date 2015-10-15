@@ -36,7 +36,7 @@ cd "$DIR/build"
 # We use Meteor fork since we added some changes to the building script.
 # Our patches allow us to link most of the libraries statically.
 git clone --branch "ssl-r$MONGO_VERSION" --depth 1 \
-    git://github.com/meteor/mongo.git
+    git://github.com/4commerce-technologies-AG/mongo.git
 cd mongo
 rm -rf .git
 
