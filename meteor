@@ -10,6 +10,13 @@ if [ "$UNAME" != "Linux" -a "$UNAME" != "Darwin" ] ; then
     exit 1
 fi
 
+# The METEOR_UNIVERSAL_FLAG will save the indicator how to handle unofficially
+# support environments. For armvXl boards we are support pre built binaries from
+# bintray. For all other systems we check, that there are system binries available
+# for node and mongo. If METEOR_UNIVERSAL_FLAG is not set, then this runs as same 
+# as official meteor installer and starter
+METEOR_UNIVERSAL_FLAG=
+
 if [ "$UNAME" = "Darwin" ] ; then
     if [ "i386" != "$(uname -p)" -o "1" != "$(sysctl -n hw.cpu64bit_capable 2>/dev/null || echo 0)" ] ; then
 
@@ -22,9 +29,13 @@ if [ "$UNAME" = "Darwin" ] ; then
 elif [ "$UNAME" = "Linux" ] ; then
     ARCH="$(uname -m)"
     if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
-        echo "Unsupported architecture: $ARCH"
-        echo "Meteor only supports i686 and x86_64 for now."
-        exit 1
+        if [ "$ARCH" != "armv6l" -a "$ARCH" != "armv7l" ] ; then
+            # set flag that we are in universal system environment support mode
+            METEOR_UNIVERSAL_FLAG="ENV"
+        else
+            # set flag that we are in unofficial ARM support mode
+            METEOR_UNIVERSAL_FLAG="ARM"
+        fi
     fi
 fi
 PLATFORM="${UNAME}_${ARCH}"
@@ -70,15 +81,46 @@ function install_dev_bundle {
         DEV_BUNDLE_URL_ROOT="https://s3.amazonaws.com/com.meteor.static/test/"
     fi
 
+    # test for unofficial supported ARM architecture
+    if [ "$METEOR_UNIVERSAL_FLAG" == "ARM" ] ; then
+        # Use bintray release downloads
+        DEV_BUNDLE_URL_ROOT="https://dl.bintray.com/4commerce-technologies-ag/meteor-universal/arm_dev_bundles/"
+    fi
+
+    # test if we can download the dev_bundle tarball
+    function __check_tarball_download() {
+      CHECK_TARBALL=$(curl --head --location --silent "$DEV_BUNDLE_URL_ROOT$TARBALL" --output /dev/null --write-out '%{http_code}')
+      # Write down a message instead doing a false download
+      if [ "$CHECK_TARBALL" != "200" ] ; then
+        if [ -n "$METEOR_UNIVERSAL_FLAG" ] ; then
+            # We have identified that there is no pre built dev_bundle available
+            # and we do not provide yet downloadable pre builts for that platform
+            echo ""
+            echo "You are trying to run Meteor on yet not official supported platform: ${PLATFORM}"
+            echo "There is currently no pre-built dev_bundle available for your system."
+            echo "Check https://github.com/4commerce-technologies-AG/meteor to get"
+            echo "the information how you may generate your own dev_bundle using"
+            echo "scripts/generate-dev-bundle.sh"
+            echo ""
+        fi
+        echo "Unable to download: $DEV_BUNDLE_URL_ROOT$TARBALL"
+        echo "Pre-built tarball is not available!"
+        echo ""
+        exit 1
+      fi
+    }
+
     if [ -f "$SCRIPT_DIR/$TARBALL" ] ; then
         echo "Skipping download and installing kit from $SCRIPT_DIR/$TARBALL" >&2
         tar -xzf "$SCRIPT_DIR/$TARBALL" -C "$BUNDLE_TMPDIR"
     elif [ -n "$SAVE_DEV_BUNDLE_TARBALL" ] ; then
         # URL duplicated in tools/server/target.sh.in
-        curl -# "$DEV_BUNDLE_URL_ROOT$TARBALL" >"$SCRIPT_DIR/$TARBALL"
+        __check_tarball_download
+        curl --location -# "$DEV_BUNDLE_URL_ROOT$TARBALL" >"$SCRIPT_DIR/$TARBALL"
         tar -xzf "$SCRIPT_DIR/$TARBALL" -C "$BUNDLE_TMPDIR"
     else
-        curl -# "$DEV_BUNDLE_URL_ROOT$TARBALL" | tar -xzf - -C "$BUNDLE_TMPDIR"
+        __check_tarball_download
+        curl --location -# "$DEV_BUNDLE_URL_ROOT$TARBALL" | tar -xzf - -C "$BUNDLE_TMPDIR"
     fi
 
     test -x "${BUNDLE_TMPDIR}/bin/node" # bomb out if it didn't work, eg no net
@@ -125,6 +167,30 @@ if [ "$(ulimit -n)" != "unlimited" ] ; then
     ulimit -n 1024 > /dev/null 2>&1 || \
     ulimit -n 512 > /dev/null 2>&1
 fi
+
+
+# In case that we have to use the universal system environment, make sure
+# that at least the necessary binaries are available
+if [ "$METEOR_UNIVERSAL_FLAG" == "ENV" ] ; then
+    # test for platform or special build and installed binaries
+    _NODE_VERSION=$("$DEV_BUNDLE/bin/node" --version 2>/dev/null)
+    _NPM_VERSION=$("$DEV_BUNDLE/bin/npm" --version 2>/dev/null)
+    _MONGO_VERSION=$("$DEV_BUNDLE/mongodb/bin/mongo" --version 2>/dev/null)
+    _MONGOD_VERSION=$("$DEV_BUNDLE/mongodb/bin/mongod" --version 2>/dev/null)
+    # check if all dependencies are available
+    if [ -z "$_NODE_VERSION" -o -z "$_NPM_VERSION" -o -z "$_MONGO_VERSION" -o -z "$_MONGOD_VERSION" ] ; then
+        echo "Meteor officially supports only i686 and x86_64 architecture for now."
+        echo "Meteor universal unofficially supports arm and universal architectures as well."
+        echo "To use the universal system environment make sure that the necessary binaries are pre-installed."
+        # show missing binaries
+        echo -e "\tcheck node version: $__NODE_VERSION"
+        echo -e "\tcheck npm version: $__NPM_VERSION"
+        echo -e "\tcheck mongo version: $__MONGO_VERSION"
+        echo -e "\tcheck mongod version: $__MONGOD_VERSION"
+        exit 1
+    fi
+fi
+
 
 # We used to set $NODE_PATH here to include the node_modules from the dev
 # bundle, but now we just get them from the symlink at tools/node_modules. This

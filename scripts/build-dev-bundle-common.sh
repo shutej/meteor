@@ -6,11 +6,22 @@ set -u
 UNAME=$(uname)
 ARCH=$(uname -m)
 
+# The METEOR_UNIVERSAL_FLAG will save the indicator how to handle unofficially
+# support environments. For armvXl boards we are support pre built binaries from
+# bintray. For all other systems we check, that there are system binries available
+# for node and mongo. If METEOR_UNIVERSAL_FLAG is not set, then this runs as same 
+# as official meteor installer and starter
+METEOR_UNIVERSAL_FLAG=
+
 if [ "$UNAME" == "Linux" ] ; then
     if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
-        echo "Unsupported architecture: $ARCH"
-        echo "Meteor only supports i686 and x86_64 for now."
-        exit 1
+        if [ "$ARCH" != "armv6l" -a "$ARCH" != "armv7l" ] ; then
+            # set flag that we are in universal system environment support mode
+            METEOR_UNIVERSAL_FLAG="ENV"
+        else
+            # set flag that we are in unofficial ARM support mode
+            METEOR_UNIVERSAL_FLAG="ARM"
+        fi
     fi
 
     OS="linux"

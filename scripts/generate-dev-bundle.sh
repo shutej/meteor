@@ -16,39 +16,102 @@ echo BUILDING DEV BUNDLE "$BUNDLE_VERSION" IN "$DIR"
 
 cd "$DIR"
 
-S3_HOST="s3.amazonaws.com/com.meteor.jenkins"
+# Check if have to build for an universal environment on yet not
+# officially supported architectures
+if [ -z "$METEOR_UNIVERSAL_FLAG" ] ; then
 
-# Update these values after building the dev-bundle-node Jenkins project.
-# Also make sure to update NODE_VERSION in generate-dev-bundle.ps1.
-NODE_VERSION=0.10.40
-NODE_BUILD_NUMBER=18
-NODE_TGZ="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
-if [ -f "${CHECKOUT_DIR}/${NODE_TGZ}" ] ; then
-    tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
+    S3_HOST="s3.amazonaws.com/com.meteor.jenkins"
+
+    # Update these values after building the dev-bundle-node Jenkins project.
+    # Also make sure to update NODE_VERSION in generate-dev-bundle.ps1.
+    NODE_VERSION=0.10.40
+    NODE_BUILD_NUMBER=18
+    NODE_TGZ="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
+    if [ -f "${CHECKOUT_DIR}/${NODE_TGZ}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
+    else
+        NODE_URL="https://${S3_HOST}/dev-bundle-node-${NODE_BUILD_NUMBER}/${NODE_TGZ}"
+        echo "Downloading Node from ${NODE_URL}"
+        curl "${NODE_URL}" | tar zx
+    fi
+
+    # Update these values after building the dev-bundle-mongo Jenkins project.
+    # Also make sure to update MONGO_VERSION in generate-dev-bundle.ps1.
+    MONGO_VERSION=2.6.7
+    MONGO_BUILD_NUMBER=6
+    MONGO_TGZ="mongo_${PLATFORM}_v${MONGO_VERSION}.tar.gz"
+    if [ -f "${CHECKOUT_DIR}/${MONGO_TGZ}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ}"
+    else
+        MONGO_URL="https://${S3_HOST}/dev-bundle-mongo-${MONGO_BUILD_NUMBER}/${MONGO_TGZ}"
+        echo "Downloading Mongo from ${MONGO_URL}"
+        curl "${MONGO_URL}" | tar zx
+    fi
+
+    # Copy bundled npm to temporary directory so we can restore it later
+    # We do this because the bundled node is built using PORTABLE=1,
+    # which makes npm look for node relative to it's own directory
+    # See build-node-for-dev-bundle.sh
+    cp -R "$DIR/lib/node_modules/npm" "$DIR/bundled-npm"
+
 else
-    NODE_URL="https://${S3_HOST}/dev-bundle-node-${NODE_BUILD_NUMBER}/${NODE_TGZ}"
-    echo "Downloading Node from ${NODE_URL}"
-    curl "${NODE_URL}" | tar zx
-fi
 
-# Update these values after building the dev-bundle-mongo Jenkins project.
-# Also make sure to update MONGO_VERSION in generate-dev-bundle.ps1.
-MONGO_VERSION=2.6.7
-MONGO_BUILD_NUMBER=6
-MONGO_TGZ="mongo_${PLATFORM}_v${MONGO_VERSION}.tar.gz"
-if [ -f "${CHECKOUT_DIR}/${MONGO_TGZ}" ] ; then
-    tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ}"
-else
-    MONGO_URL="https://${S3_HOST}/dev-bundle-mongo-${MONGO_BUILD_NUMBER}/${MONGO_TGZ}"
-    echo "Downloading Mongo from ${MONGO_URL}"
-    curl "${MONGO_URL}" | tar zx
-fi
+    # For an universal build we can use a self compiled tarballs for
+    # node and mongo or system installed binaries
 
-# Copy bundled npm to temporary directory so we can restore it later
-# We do this because the bundled node is built using PORTABLE=1,
-# which makes npm look for node relative to it's own directory
-# See build-node-for-dev-bundle.sh
-cp -R "$DIR/lib/node_modules/npm" "$DIR/bundled-npm"
+    # Take the version from meteor above
+    NODE_VERSION=0.10.40
+    NODE_BUILD_NUMBER=18
+    NODE_TGZ="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
+    if [ -f "${CHECKOUT_DIR}/${NODE_TGZ}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
+    else
+        # test for system installed binaries
+        if [ -z "$(which node)" -o -z "$(which npm)" ] ; then
+            echo "To generate dev bundle with system binaries please make sure"
+            echo "that node (compatible to $NODE_VERSION) and npm is installed."
+            echo -e "\tnode version:" $(which node)
+            echo -e "\tnpm version:" $(which npm)
+            exit 1
+        fi
+        # link to pre-installed binaries on universal build
+        # also need etc for "global" npmrc
+        mkdir -p "$DIR/bin"
+        mkdir -p "$DIR/etc"
+        ln -s "$(which node)" "$DIR/bin/node"
+        ln -s "$(which npm)"  "$DIR/bin/npm"
+    fi
+
+    # Take the version from meteor above
+    MONGO_VERSION=2.6.7
+    MONGO_BUILD_NUMBER=6
+    MONGO_TGZ="mongo_${PLATFORM}_v${MONGO_VERSION}.tar.gz"
+    if [ -f "${CHECKOUT_DIR}/${MONGO_TGZ}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ}"
+    else
+        # test for system installed binaries
+        if [ -z "$(which mongo)" -o -z "$(which mongod)" ] ; then
+            echo "To generate dev bundle with system binaries please make sure"
+            echo "that mongo and mongod is installed."
+            echo -e "\tmongo version:" $(which mongo)
+            echo -e "\tmongod version:" $(which mongod)
+            exit 1
+        fi
+        # link to pre-installed binaries on universal build
+        mkdir -p "$DIR/mongodb/bin"
+        ln -s "$(which mongo)"  "$DIR/mongodb/bin/mongo"
+        ln -s "$(which mongod)" "$DIR/mongodb/bin/mongod"
+    fi
+
+    # Copy bundled npm to temporary directory so we can restore it later
+    # We do this because the bundled node is built using PORTABLE=1,
+    # which makes npm look for node relative to it's own directory
+    # See build-node-for-dev-bundle.sh
+    if [ -d "$DIR/lib/node_modules/npm" ] ; then
+        cp -R "$DIR/lib/node_modules/npm" "$DIR/bundled-npm"
+    fi
+
+fi
 
 # export path so we use the downloaded node and npm
 export PATH="$DIR/bin:$PATH"
@@ -107,6 +170,7 @@ mkdir "${DIR}/build/npm-tool-install"
 cd "${DIR}/build/npm-tool-install"
 node "${CHECKOUT_DIR}/scripts/dev-bundle-tool-package.js" >package.json
 npm install
+mkdir -p "${DIR}/lib/node_modules/"
 cp -R node_modules/* "${DIR}/lib/node_modules/"
 
 cd "${DIR}/lib"
@@ -138,14 +202,19 @@ find . -path '*/esprima-fb/test' | xargs rm -rf
 cd "$DIR/lib/node_modules/fibers/bin"
 shrink_fibers
 
-# Download BrowserStackLocal binary.
-BROWSER_STACK_LOCAL_URL="https://browserstack-binaries.s3.amazonaws.com/BrowserStackLocal-07-03-14-$OS-$ARCH.gz"
+# Check if have to build on universal architecture
+if [ -z "$METEOR_UNIVERSAL_FLAG" ] ; then
 
-cd "$DIR/build"
-curl -O $BROWSER_STACK_LOCAL_URL
-gunzip BrowserStackLocal*
-mv BrowserStackLocal* BrowserStackLocal
-mv BrowserStackLocal "$DIR/bin/"
+    # Download BrowserStackLocal binary.
+    BROWSER_STACK_LOCAL_URL="https://browserstack-binaries.s3.amazonaws.com/BrowserStackLocal-07-03-14-$OS-$ARCH.gz"
+
+    cd "$DIR/build"
+    curl -O $BROWSER_STACK_LOCAL_URL
+    gunzip BrowserStackLocal*
+    mv BrowserStackLocal* BrowserStackLocal
+    mv BrowserStackLocal "$DIR/bin/"
+
+fi
 
 # remove our temporary npm3 directory
 rm -rf "$DIR/bin/npm3"
