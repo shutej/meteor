@@ -6,6 +6,9 @@ set -u
 UNAME=$(uname)
 ARCH=$(uname -m)
 
+# save number of processors to define max parallelism for build processes
+NPROCESSORS=$(getconf _NPROCESSORS_ONLN)
+
 # The METEOR_UNIVERSAL_FLAG will save the indicator how to handle unofficially
 # support environments. For armvXl boards we are support pre built binaries from
 # bintray. For all other systems we check, that there are system binries available
