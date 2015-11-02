@@ -7,7 +7,13 @@ UNAME=$(uname)
 ARCH=$(uname -m)
 
 # save number of processors to define max parallelism for build processes
-NPROCESSORS=$(getconf _NPROCESSORS_ONLN)
+# we call that via additional bash process to not get trapped on error
+# Linux and compatible...
+NPROCESSORS=$(/usr/bin/env bash -c "getconf _NPROCESSORS_ONLN 2>/dev/null; exit 0")
+# FreeBSD and compatible...
+[ -z "$NPROCESSORS" ] && NPROCESSORS=$(/usr/bin/env bash -c "getconf NPROCESSORS_ONLN 2>/dev/null; exit 0")
+# Not identifiable, set fix to minimal resources...
+[ -z "$NPROCESSORS" ] && NPROCESSORS=1
 
 # The METEOR_UNIVERSAL_FLAG will save the indicator how to handle unofficially
 # support environments. For armvXl boards we are support pre built binaries from
