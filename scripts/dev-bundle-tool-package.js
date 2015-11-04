@@ -48,7 +48,7 @@ var packageJson = {
     "node-inspector": "0.7.4",
     chalk: "0.5.1",
     sqlite3: "3.0.2",
-    netroute: "0.2.5",
+    netroute: "1.0.2",
     phantomjs: "1.9.12",
     "http-proxy": "1.11.1",
     "wordwrap": "0.0.2",
