@@ -147,16 +147,16 @@ var host = function () {
       _host  = "os.osx.x86_64";
     }
 
-    else if (platform === "linux") {
+    else if (_.contains(["linux", "freebsd", "openbsd", "netbsd"], platform)) {
       var machine = run('uname', '-m');
       if (_.contains(["i386", "i686", "x86"], machine))
-        _host = "os.linux.x86_32";
+        _host = "os." + platform + ".x86_32";
       else if (_.contains(["x86_64", "amd64", "ia64"], machine))
-        _host = "os.linux.x86_64";
+        _host = "os." + platform + ".x86_64";
       else if (_.contains(["armv6l"], machine))
-        _host = "os.linux.armv6l";
+        _host = "os." + platform + ".armv6l";
       else if (_.contains(["armv7l"], machine))
-        _host = "os.linux.armv7l";
+        _host = "os." + platform + ".armv7l";
       else
         throw new Error("Unsupported architecture: " + machine);
     }

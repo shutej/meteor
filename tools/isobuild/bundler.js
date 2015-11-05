@@ -1792,6 +1792,18 @@ class ServerTarget extends JsImageTarget {
       'os.linux.x86_64': 'Linux_x86_64',
       'os.linux.armv6l': 'Linux_armv6l',
       'os.linux.armv7l': 'Linux_armv7l',
+      'os.freebsd.x86_32': 'FreeBSD_i686',
+      'os.freebsd.x86_64': 'FreeBSD_x86_64',
+      'os.freebsd.armv6l': 'FreeBSD_armv6l',
+      'os.freebsd.armv7l': 'FreeBSD_armv7l',
+      'os.openbsd.x86_32': 'OpenBSD_i686',
+      'os.openbsd.x86_64': 'OpenBSD_x86_64',
+      'os.openbsd.armv6l': 'OpenBSD_armv6l',
+      'os.openbsd.armv7l': 'OpenBSD_armv7l',
+      'os.netbsd.x86_32': 'NetBSD_i686',
+      'os.netbsd.x86_64': 'NetBSD_x86_64',
+      'os.netbsd.armv6l': 'NetBSD_armv6l',
+      'os.netbsd.armv7l': 'NetBSD_armv7l',
       'os.osx.x86_64': 'Darwin_x86_64',
       'os.windows.x86_32': 'Windows_x86_32'
     };
