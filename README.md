@@ -318,6 +318,11 @@ node main.js
 ```
 
 <br/>
+##### Guide and tutorial issues
+
+Some of the already known issues may also help as a guide or tutorial. Please check out our [_guide flagged issues_](https://github.com/4commerce-technologies-AG/meteor/issues?q=+label%3Aflag%3Aguide+) if your question may already be answered.
+
+<br/>
 ## Uninstalling Meteor
 
 This meteor fork will not install or create any global files – except your developments
@@ -365,7 +370,7 @@ If you are looking for compatible node packages they are also available at BINTR
 * Issue tracker: https://github.com/4commerce-technologies-AG/meteor/issues
 * Knowledge base: http://meteor-universal.tumblr.com
 * Binary repositories: [https://bintray.com/4commerce-technologies-ag/meteor-universal](https://bintray.com/4commerce-technologies-ag/meteor-universal)
-* Meteor forum: [https://forums.meteor.com/search?q=ARM](https://forums.meteor.com/search?q=%2B%22ARM%22%20order%3Alatest)
+* Meteor forum: [search for meteor universal fork](https://forums.meteor.com/search?q=meteor%20universal%20fork)
 
 <br/>
 ##### Interested in updated forks for ARM support?
