@@ -6,8 +6,10 @@ BUNDLE_VERSION=0.6.15
 # bundles that are arch specific.
 UNAME=$(uname)
 if [ "$UNAME" != "Linux" -a "$UNAME" != "Darwin" ] ; then
-    echo "Sorry, this OS is not supported."
-    exit 1
+    if [ "$UNAME" != "FreeBSD" -a "$UNAME" != "OpenBSD" -a "$UNAME" != "NetBSD" ] ; then
+        echo "Sorry, this OS is not supported."
+        exit 1
+    fi
 fi
 
 # The METEOR_UNIVERSAL_FLAG will save the indicator how to handle unofficially
@@ -31,11 +33,20 @@ elif [ "$UNAME" = "Linux" ] ; then
     if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
         if [ "$ARCH" != "armv6l" -a "$ARCH" != "armv7l" ] ; then
             # set flag that we are in universal system environment support mode
-            METEOR_UNIVERSAL_FLAG="ENV"
+            METEOR_UNIVERSAL_FLAG="env"
         else
             # set flag that we are in unofficial ARM support mode
-            METEOR_UNIVERSAL_FLAG="ARM"
+            METEOR_UNIVERSAL_FLAG="arm"
         fi
+    fi
+elif [ "$UNAME" = "FreeBSD" -o "$UNAME" = "OpenBSD" -o "$UNAME" = "NetBSD" ] ; then
+    ARCH="$(uname -m)"
+    if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" -a "$ARCH" != "amd64" ] ; then
+        # set flag that we are in universal system environment support mode
+        METEOR_UNIVERSAL_FLAG="env"
+    else
+        # set flag that we are in unofficial xBSD support mode
+        METEOR_UNIVERSAL_FLAG="bsd"
     fi
 fi
 PLATFORM="${UNAME}_${ARCH}"
@@ -81,10 +92,10 @@ function install_dev_bundle {
         DEV_BUNDLE_URL_ROOT="https://s3.amazonaws.com/com.meteor.static/test/"
     fi
 
-    # test for unofficial supported ARM architecture
-    if [ "$METEOR_UNIVERSAL_FLAG" == "ARM" ] ; then
+    # test for unofficial supported architecture based dev_bundles
+    if [ -n "$METEOR_UNIVERSAL_FLAG" ] ; then
         # Use bintray release downloads
-        DEV_BUNDLE_URL_ROOT="https://dl.bintray.com/4commerce-technologies-ag/meteor-universal/arm_dev_bundles/"
+        DEV_BUNDLE_URL_ROOT="https://dl.bintray.com/4commerce-technologies-ag/meteor-universal/${METEOR_UNIVERSAL_FLAG}_dev_bundles/"
     fi
 
     # test if we can download the dev_bundle tarball
@@ -121,6 +132,46 @@ function install_dev_bundle {
     else
         __check_tarball_download
         curl --location -# "$DEV_BUNDLE_URL_ROOT$TARBALL" | tar -xzf - -C "$BUNDLE_TMPDIR"
+    fi
+
+    # In case that we have to use the universal system environment, make sure
+    # that at least the necessary linked binaries are available and linked to
+    # the correct system binaries. If detect a linked binary just set the link
+    # again to the installed system one after unpacking
+    if [ -L "$BUNDLE_TMPDIR/bin/node" ] ; then
+        # test for system installed binaries
+        if [ -z "$(which node 2>/dev/null)" -o -z "$(which npm 2>/dev/null)" ] ; then
+            echo "Meteor officially supports only Linux i686 and x86_64 and OSX architecture for now."
+            echo "Meteor universal unofficially supports arm, bsd and universal architectures as well."
+            echo "To use the universal system environment make sure that the necessary binaries are pre-installed."
+            echo "Please make sure that node (compatible to $NODE_VERSION) and npm is installed."
+            echo -e "\tnode version:" $(which node 2>/dev/null)
+            echo -e "\tnpm version:" $(which npm 2>/dev/null)
+            exit 1
+        fi
+        # remove the link from dev_bundle tgz and reset new to existing binary
+        rm -f "$BUNDLE_TMPDIR/bin/node"
+        rm -f "$BUNDLE_TMPDIR/bin/npm"
+        ln -s "$(which node)" "$BUNDLE_TMPDIR/bin/node"
+        ln -s "$(which npm)"  "$BUNDLE_TMPDIR/bin/npm"
+    fi
+
+    if [ -L "$BUNDLE_TMPDIR/mongodb/bin/mongod" ] ; then
+        # test for system installed binaries
+        if [ -z "$(which mongo 2>/dev/null)" -o -z "$(which mongod 2>/dev/null)" ] ; then
+            echo "Meteor officially supports only Linux i686 and x86_64 and OSX architecture for now."
+            echo "Meteor universal unofficially supports arm, bsd and universal architectures as well."
+            echo "To use the universal system environment make sure that the necessary binaries are pre-installed."
+            echo "Please make sure that mongo and mongod is installed."
+            echo -e "\tmongo version:" $(which mongo 2>/dev/null)
+            echo -e "\tmongod version:" $(which mongod 2>/dev/null)
+            exit 1
+        fi
+        # remove the link from dev_bundle tgz and reset new to existing binary
+        rm -f "$BUNDLE_TMPDIR/mongodb/bin/mongo"
+        rm -f "$BUNDLE_TMPDIR/mongodb/bin/mongod"
+        ln -s "$(which mongo 2>/dev/null)"  "$BUNDLE_TMPDIR/mongodb/bin/mongo"
+        ln -s "$(which mongod 2>/dev/null)" "$BUNDLE_TMPDIR/mongodb/bin/mongod"
     fi
 
     test -x "${BUNDLE_TMPDIR}/bin/node" # bomb out if it didn't work, eg no net
@@ -166,29 +217,6 @@ if [ "$(ulimit -n)" != "unlimited" ] ; then
     ulimit -n 2048 > /dev/null 2>&1 || \
     ulimit -n 1024 > /dev/null 2>&1 || \
     ulimit -n 512 > /dev/null 2>&1
-fi
-
-
-# In case that we have to use the universal system environment, make sure
-# that at least the necessary binaries are available
-if [ "$METEOR_UNIVERSAL_FLAG" == "ENV" ] ; then
-    # test for platform or special build and installed binaries
-    _NODE_VERSION=$("$DEV_BUNDLE/bin/node" --version 2>/dev/null)
-    _NPM_VERSION=$("$DEV_BUNDLE/bin/npm" --version 2>/dev/null)
-    _MONGO_VERSION=$("$DEV_BUNDLE/mongodb/bin/mongo" --version 2>/dev/null)
-    _MONGOD_VERSION=$("$DEV_BUNDLE/mongodb/bin/mongod" --version 2>/dev/null)
-    # check if all dependencies are available
-    if [ -z "$_NODE_VERSION" -o -z "$_NPM_VERSION" -o -z "$_MONGO_VERSION" -o -z "$_MONGOD_VERSION" ] ; then
-        echo "Meteor officially supports only i686 and x86_64 architecture for now."
-        echo "Meteor universal unofficially supports arm and universal architectures as well."
-        echo "To use the universal system environment make sure that the necessary binaries are pre-installed."
-        # show missing binaries
-        echo -e "\tcheck node version: $__NODE_VERSION"
-        echo -e "\tcheck npm version: $__NPM_VERSION"
-        echo -e "\tcheck mongo version: $__MONGO_VERSION"
-        echo -e "\tcheck mongod version: $__MONGOD_VERSION"
-        exit 1
-    fi
 fi
 
 

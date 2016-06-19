@@ -16,19 +16,25 @@ git clone --branch "v${NODE_VERSION}" --depth 1 \
     https://github.com/nodejs/node.git
 cd node
 rm -rf .git
-if [ "$METEOR_UNIVERSAL_FLAG" == "ARM" ] ; then
+if [ "$ARCH" = "armv6l" -o "$ARCH" = "armv7l" ] ; then
   ./configure --without-snapshot --prefix="$DIR"
 else
   ./configure --prefix="$DIR"
 fi
 
+if [ "$OS" = "bsd" ] ; then
+    MAKE_CMD=gmake
+else
+    MAKE_CMD=make
+fi
+
 # check number of cores for parallelism flag
 if [ "$NPROCESSORS" -lt "4" ] ; then
-    make -j1
+    $MAKE_CMD -j1
 else
-    make -j4
+    $MAKE_CMD -j4
 fi
-make install PORTABLE=1
+$MAKE_CMD install PORTABLE=1
 # PORTABLE=1 is a node hack to make npm look relative to itself instead
 # of hard coding the PREFIX.
 

@@ -53,19 +53,19 @@ else
         tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
     else
         # test for system installed binaries
-        if [ -z "$(which node)" -o -z "$(which npm)" ] ; then
+        if [ -z "$(which node 2>/dev/null)" -o -z "$(which npm 2>/dev/null)" ] ; then
             echo "To generate dev bundle with system binaries please make sure"
             echo "that node (compatible to $NODE_VERSION) and npm is installed."
-            echo -e "\tnode version:" $(which node)
-            echo -e "\tnpm version:" $(which npm)
+            echo -e "\tnode version:" $(which node 2>/dev/null)
+            echo -e "\tnpm version:" $(which npm 2>/dev/null)
             exit 1
         fi
         # link to pre-installed binaries on universal build
         # also need etc for "global" npmrc
         mkdir -p "$DIR/bin"
         mkdir -p "$DIR/etc"
-        ln -s "$(which node)" "$DIR/bin/node"
-        ln -s "$(which npm)"  "$DIR/bin/npm"
+        ln -s "$(which node 2>/dev/null)" "$DIR/bin/node"
+        ln -s "$(which npm 2>/dev/null)"  "$DIR/bin/npm"
     fi
 
     # Take the version from meteor above
@@ -76,17 +76,17 @@ else
         tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ}"
     else
         # test for system installed binaries
-        if [ -z "$(which mongo)" -o -z "$(which mongod)" ] ; then
+        if [ -z "$(which mongo 2>/dev/null)" -o -z "$(which mongod 2>/dev/null)" ] ; then
             echo "To generate dev bundle with system binaries please make sure"
             echo "that mongo and mongod is installed."
-            echo -e "\tmongo version:" $(which mongo)
-            echo -e "\tmongod version:" $(which mongod)
+            echo -e "\tmongo version:" $(which mongo 2>/dev/null)
+            echo -e "\tmongod version:" $(which mongod 2>/dev/null)
             exit 1
         fi
         # link to pre-installed binaries on universal build
         mkdir -p "$DIR/mongodb/bin"
-        ln -s "$(which mongo)"  "$DIR/mongodb/bin/mongo"
-        ln -s "$(which mongod)" "$DIR/mongodb/bin/mongod"
+        ln -s "$(which mongo 2>/dev/null)"  "$DIR/mongodb/bin/mongo"
+        ln -s "$(which mongod 2>/dev/null)" "$DIR/mongodb/bin/mongod"
     fi
 
 fi

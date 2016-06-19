@@ -28,14 +28,28 @@ if [ "$UNAME" == "Linux" ] ; then
     if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
         if [ "$ARCH" != "armv6l" -a "$ARCH" != "armv7l" ] ; then
             # set flag that we are in universal system environment support mode
-            METEOR_UNIVERSAL_FLAG="ENV"
+            METEOR_UNIVERSAL_FLAG="env"
         else
             # set flag that we are in unofficial ARM support mode
-            METEOR_UNIVERSAL_FLAG="ARM"
+            METEOR_UNIVERSAL_FLAG="arm"
         fi
     fi
 
     OS="linux"
+
+    stripBinary() {
+        strip --remove-section=.comment --remove-section=.note $1
+    }
+elif [ "$UNAME" = "FreeBSD" -o "$UNAME" = "OpenBSD" -o "$UNAME" = "NetBSD" ] ; then
+    if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" -a "$ARCH" != "amd64" ] ; then
+        # set flag that we are in universal system environment support mode
+        METEOR_UNIVERSAL_FLAG="env"
+    else
+        # set flag that we are in unofficial xBSD support mode
+        METEOR_UNIVERSAL_FLAG="bsd"
+    fi
+
+    OS="bsd"
 
     stripBinary() {
         strip --remove-section=.comment --remove-section=.note $1
