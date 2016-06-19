@@ -21,7 +21,13 @@ if [ "$METEOR_UNIVERSAL_FLAG" == "ARM" ] ; then
 else
   ./configure --prefix="$DIR"
 fi
-make -j4
+
+# check number of cores for parallelism flag
+if [ "$NPROCESSORS" -lt "4" ] ; then
+    make -j1
+else
+    make -j4
+fi
 make install PORTABLE=1
 # PORTABLE=1 is a node hack to make npm look relative to itself instead
 # of hard coding the PREFIX.
