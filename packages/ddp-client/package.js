@@ -5,7 +5,9 @@ Package.describe({
 });
 
 Npm.depends({
-  "faye-websocket": "0.9.4",
+  // We have to use a newer version of faye-websocket in order to avoid a weird
+  // OpenSSL bug, which prevents the catalog from updating... That's all I know
+  "faye-websocket": "0.11.0",
   "lolex": "1.4.0",
   "permessage-deflate": "0.1.3"
 });
