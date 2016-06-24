@@ -16,7 +16,7 @@ var packageJson = {
     "node-pre-gyp": "0.6.26",
     "meteor-babel": "0.11.6",
     "meteor-promise": "0.7.2",
-    fibers: "1.0.13",
+    fibers: "https://github.com/4commerce-technologies-AG/node-fibers.git#v1.0.13-patch-arm64",
     promise: "7.1.1",
     // So that Babel 6 can emit require("babel-runtime/helpers/...") calls.
     "babel-runtime": "6.9.2",
