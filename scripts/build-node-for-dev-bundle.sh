@@ -16,7 +16,7 @@ git clone --branch "v${NODE_VERSION}" --depth 1 \
     https://github.com/nodejs/node.git
 cd node
 rm -rf .git
-if [ "$ARCH" = "armv6l" -o "$ARCH" = "armv7l" ] ; then
+if [ "$ARCH" = "armv6l" -o "$ARCH" = "armv7l" -o "$ARCH" = "armv8l" -o "$ARCH" != "aarch64" ] ; then
   ./configure --without-snapshot --prefix="$DIR"
 else
   ./configure --prefix="$DIR"

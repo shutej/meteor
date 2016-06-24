@@ -159,6 +159,10 @@ var host = function () {
         _host = "os." + platform + ".armv6l";
       } else if (_.contains(["armv7l"], machine)) {
         _host = "os." + platform + ".armv7l";
+      } else if (_.contains(["armv8l"], machine)) {
+        _host = "os." + platform + ".armv8l";
+      } else if (_.contains(["aarch64"], machine)) {
+        _host = "os." + platform + ".aarch64";
       } else {
         throw new Error("Unsupported architecture: " + machine);
       }
