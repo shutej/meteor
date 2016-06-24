@@ -13,6 +13,7 @@ var archinfo = require('../utils/archinfo.js');
 var config = require('../meteor-services/config.js');
 var buildmessage = require('../utils/buildmessage.js');
 var execFileSync = require('../utils/processes.js').execFileSync;
+// MARK: next line is not available in upstream/WIP4
 var Builder = require('../isobuild/builder.js').default;
 
 var catalog = require('../packaging/catalog/catalog.js');

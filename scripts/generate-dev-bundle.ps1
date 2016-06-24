@@ -2,7 +2,7 @@
 # use 32bit by default
 $PLATFORM = "windows_x86"
 $MONGO_VERSION = "2.6.7"
-$NODE_VERSION = "0.10.45"
+$NODE_VERSION = "4.4.6"
 $NPM_VERSION = "3.9.6"
 $PYTHON_VERSION = "2.7.10" # For node-gyp
 
@@ -37,7 +37,7 @@ $shell = New-Object -com shell.application
 
 # download node
 # same node on 32bit vs 64bit?
-$node_link = "http://nodejs.org/dist/v${NODE_VERSION}/node.exe"
+$node_link = "http://nodejs.org/dist/v${NODE_VERSION}/win-x86/node.exe"
 $webclient.DownloadFile($node_link, "$DIR\bin\node.exe")
 
 # On Windows we provide a reliable version of python.exe for use by
@@ -131,6 +131,9 @@ cp "$DIR\mongodb\$mongo_name\bin\mongo.exe" $DIR\mongodb\bin
 
 rm -Recurse -Force $mongo_zip
 rm -Recurse -Force "$DIR\mongodb\$mongo_name"
+
+rm -Recurse -Force "$py_msi"
+python --version
 
 rm -Recurse -Force "$py_msi"
 python --version

@@ -40,6 +40,25 @@ meteorInstall = makeInstaller(options);
 var Mp = meteorInstall.Module.prototype;
 
 if (Meteor.isServer) {
+
+  // The Module.prototype.get method is called to lookup exported properties
+  // by name when using the require(id, setters) style. This implementation
+  // takes into account Babel-specific conventions around .default exports
+  // and the .__esModule flag.
+  Mp.get = function (key) {
+    var exports = this.exports;
+
+    if (key === "*" ||
+        (key === "default" &&
+         ! (exports && exports.__esModule))) {
+      return exports;
+    }
+
+    return exports[key];
+  };
+
+  // Defining Module.prototype.useNode allows the module system to
+  // delegate evaluation to Node, unless useNode returns false.
   Mp.useNode = function () {
     if (typeof npmRequire !== "function") {
       // Can't use Node if npmRequire is not defined.

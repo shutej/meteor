@@ -154,7 +154,7 @@ function recordLastRebuildVersions(pkgDir) {
 
 // Rebuilds any binary dependencies in the given node_modules directory,
 // and returns true iff anything was rebuilt.
-meteorNpm.rebuildIfNonPortable =
+meteorNpm.rebuildIfNonPortable = 
 Profile("meteorNpm.rebuildIfNonPortable", function (nodeModulesDir) {
   const dirsToRebuild = [];
 
