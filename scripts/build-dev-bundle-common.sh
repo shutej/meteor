@@ -84,7 +84,14 @@ fi
 
 PLATFORM="${UNAME}_${ARCH}"
 
-if [ "$UNAME" == "Linux" ]
+# If using METEOR UNIVERSAL we can skip this test for NODE_TGZ
+if [ -n "$METEOR_UNIVERSAL_FLAG" ]
+then
+    # create unusable setting here just as a "Debug" output
+    # this will be normally overriden in generate-dev-bundle.sh when
+    # separate build of node is available by build-node-for-dev-bundle.sh
+    NODE_TGZ="when-using-meteor-universal-you-need-to-get-node-binaries-yourself_${PLATFORM}.tar.gz"
+elif [ "$UNAME" == "Linux" ]
 then
     if [ "$ARCH" == "i686" ]
     then
