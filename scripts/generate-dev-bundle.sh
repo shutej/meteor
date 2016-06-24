@@ -47,7 +47,6 @@ else
     # node and mongo or system installed binaries
 
     # Take the version from meteor above
-    NODE_VERSION=0.10.45
     NODE_TGZ="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
     if [ -f "${CHECKOUT_DIR}/${NODE_TGZ}" ] ; then
         tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
