@@ -26,7 +26,7 @@ METEOR_UNIVERSAL_FLAG=
 
 if [ "$UNAME" == "Linux" ] ; then
     if [ "$ARCH" != "i686" -a "$ARCH" != "x86_64" ] ; then
-        if [ "$ARCH" != "armv6l" -a "$ARCH" != "armv7l" ] ; then
+        if [ "$ARCH" != "armv6l" -a "$ARCH" != "armv7l" -a "$ARCH" != "armv8l" -a "$ARCH" != "aarch64" ] ; then
             # set flag that we are in universal system environment support mode
             METEOR_UNIVERSAL_FLAG="env"
         else
