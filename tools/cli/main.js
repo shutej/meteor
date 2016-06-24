@@ -536,7 +536,7 @@ Fiber(function () {
 
   // Check required Node version.
   // This code is duplicated in tools/server/boot.js.
-  var MIN_NODE_VERSION = 'v0.10.41';
+  var MIN_NODE_VERSION = 'v4.4.6';
   if (require('semver').lt(process.version, MIN_NODE_VERSION)) {
     Console.error(
       'Meteor requires Node ' + MIN_NODE_VERSION + ' or later.');

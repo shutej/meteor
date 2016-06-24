@@ -5,6 +5,8 @@ set -u
 
 UNAME=$(uname)
 ARCH=$(uname -m)
+# When upgrading node versions, also update the values of MIN_NODE_VERSION at the
+# top of tools/cli/main.js and tools/static-assets/server/boot.js
 NODE_VERSION=4.4.6
 NPM_VERSION=3.9.6
 
