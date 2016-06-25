@@ -3,11 +3,18 @@
 set -e
 set -u
 
-MONGO_VERSION="2.6.7"
+MONGO_VERSION="3.2.6"
 
 source "$(dirname $0)/build-dev-bundle-common.sh"
 echo CHECKOUT DIR IS "$CHECKOUT_DIR"
 echo BUILDING MONGO "v$MONGO_VERSION" IN "$DIR"
+
+# Check that we are running on a universal environment, otherwise
+# stop and show info about default mongo binary downloads
+if [ -z "$METEOR_UNIVERSAL_FLAG" || "$METEOR_UNIVERSAL_FLAG" == "env" ]; then
+    echo "We don't know how to build mongo for this architecture"
+    exit 1
+fi
 
 # Checkout and build mongodb.
 # We want to build a binary that includes SSL support but does not depend on a
@@ -19,12 +26,11 @@ wget $OPENSSL_URL || curl -O $OPENSSL_URL
 tar xzf $OPENSSL.tar.gz
 
 cd $OPENSSL
-if [ "$UNAME" == "Linux" ]; then
+if [ "$OS" == "linux" ]; then
     ./config --prefix="$DIR/build/openssl-out" no-shared
 else
-    # This configuration line is taken from Homebrew formula:
-    # https://github.com/mxcl/homebrew/blob/master/Library/Formula/openssl.rb
-    ./Configure no-shared zlib-dynamic --prefix="$DIR/build/openssl-out" darwin64-x86_64-cc enable-ec_nistp_64_gcc_128
+    echo "We don't know how to confgiure openssl for this platform"
+    exit 1
 fi
 make install
 
@@ -35,8 +41,8 @@ cd "$DIR/build"
 
 # We use Meteor fork since we added some changes to the building script.
 # Our patches allow us to link most of the libraries statically.
-git clone --branch "ssl-r$MONGO_VERSION" --depth 1 \
-    git://github.com/4commerce-technologies-AG/mongo.git
+git clone --branch "r$MONGO_VERSION" --depth 1 \
+    https://github.com/mongodb/mongo.git
 cd mongo
 rm -rf .git
 
@@ -44,18 +50,14 @@ rm -rf .git
 
 # check number of cores for parallelism flag
 if [ "$NPROCESSORS" -lt "4" ] ; then
-    MONGO_FLAGS="--ssl --release -j1 "
+    MONGO_FLAGS="--ssl --release -j$NPROCESSORS "
 else
     MONGO_FLAGS="--ssl --release -j4 "
 fi
 
 MONGO_FLAGS+="--cpppath=$DIR/build/openssl-out/include --libpath=$DIR/build/openssl-out/lib "
 
-if [ "$OS" == "osx" ]; then
-    # NOTE: '--64' option breaks the compilation, even it is on by default on x64 mac: https://jira.mongodb.org/browse/SERVER-5575
-    MONGO_FLAGS+="--openssl=$DIR/build/openssl-out/lib "
-    /usr/local/bin/scons $MONGO_FLAGS mongo mongod
-elif [ "$OS" == "linux" ]; then
+if [ "$OS" == "linux" ]; then
     MONGO_FLAGS+="--no-glibc-check --prefix=./ "
     if [ "$ARCH" == "x86_64" ]; then
       MONGO_FLAGS+="--64"
