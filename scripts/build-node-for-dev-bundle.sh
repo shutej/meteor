@@ -25,7 +25,7 @@ fi
 
 # check number of cores for parallelism flag
 if [ "$NPROCESSORS" -lt "4" ] ; then
-    $MAKE_CMD -j1
+    $MAKE_CMD -j"$NPROCESSORS"
 else
     $MAKE_CMD -j4
 fi
