@@ -5,8 +5,8 @@ set -u
 
 UNAME=$(uname)
 ARCH=$(uname -m)
-NODE_VERSION=4.4.5
-NPM_VERSION=3.9.6
+NODE_VERSION=4.4.7
+NPM_VERSION=3.10.2
 
 # save number of processors to define max parallelism for build processes
 # we call that via additional bash process to not get trapped on error

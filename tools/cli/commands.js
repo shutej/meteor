@@ -703,6 +703,15 @@ main.registerCommand({
       return;
     }
 
+    // Also, write package version constraints from the current release
+    // If we are on a checkout, we don't need to do this as running from
+    // checkout still pins all package versions and if the user updates
+    // to a real release, the packages file will subsequently get updated
+    if (!release.current.isCheckout()) {
+      projectContext.projectConstraintsFile
+        .updateReleaseConstraints(release.current._manifest);
+    }
+
     // Any upgrader that is in this version of Meteor doesn't need to be run on
     // this project.
     var upgraders = require('../upgraders.js');
@@ -1611,23 +1620,30 @@ function doTestCommand(options) {
     projectContextOptions.projectLocalDir = files.pathJoin(testRunnerAppDir, '.meteor', 'local');
 
     // Copy the existing build and isopacks to speed up the initial start
-    const copyDirIntoTestRunnerApp = (...parts) => {
+    function copyDirIntoTestRunnerApp(allowSymlink, ...parts) {
       // Depending on whether the user has run `meteor run` or other commands, they
       // may or may not exist yet
       const appDirPath = files.pathJoin(options.appDir, ...parts);
-      if (files.exists(appDirPath)) {
-        files.cp_r(
-          appDirPath,
-          files.pathJoin(testRunnerAppDir, ...parts),
-          {preserveSymlinks: true}
-        );
+      const testDirPath = files.pathJoin(testRunnerAppDir, ...parts);
+
+      files.mkdir_p(appDirPath);
+      files.mkdir_p(files.pathDirname(testDirPath));
+
+      if (allowSymlink) {
+        // Windows can create junction links without administrator
+        // privileges since both paths refer to directories.
+        files.symlink(appDirPath, testDirPath, "junction");
+      } else {
+        files.cp_r(appDirPath, testDirPath, {
+          preserveSymlinks: true
+        });
       }
     }
 
-    copyDirIntoTestRunnerApp('.meteor', 'local', 'build');
-    copyDirIntoTestRunnerApp('.meteor', 'local', 'bundler-cache');
-    copyDirIntoTestRunnerApp('.meteor', 'local', 'isopacks');
-    copyDirIntoTestRunnerApp('.meteor', 'local', 'plugin-cache');
+    copyDirIntoTestRunnerApp(false, '.meteor', 'local', 'build');
+    copyDirIntoTestRunnerApp(true, '.meteor', 'local', 'bundler-cache');
+    copyDirIntoTestRunnerApp(true, '.meteor', 'local', 'isopacks');
+    copyDirIntoTestRunnerApp(true, '.meteor', 'local', 'plugin-cache');
     
     projectContext = new projectContextModule.ProjectContext(projectContextOptions);
 
