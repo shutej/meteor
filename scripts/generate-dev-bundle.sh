@@ -29,7 +29,6 @@ if [ -z "$METEOR_UNIVERSAL_FLAG" ] ; then
     curl "${NODE_URL}" | tar zx --strip-components 1
 
     # Download Mongo from mongodb.com
-    MONGO_VERSION=3.2.6
     MONGO_NAME="mongodb-${OS}-${ARCH}-${MONGO_VERSION}"
     MONGO_TGZ="${MONGO_NAME}.tgz"
     MONGO_URL="http://fastdl.mongodb.org/${OS}/${MONGO_TGZ}"
@@ -45,12 +44,18 @@ if [ -z "$METEOR_UNIVERSAL_FLAG" ] ; then
 else
 
     # For an universal build we can use a self compiled tarballs for
-    # node and mongo or system installed binaries
+    # node and mongo or try on nodejs.org or use system installed binaries
 
-    # Take the version from meteor above
-    NODE_TGZ="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
-    if [ -f "${CHECKOUT_DIR}/${NODE_TGZ}" ] ; then
-        tar zxf "${CHECKOUT_DIR}/${NODE_TGZ}"
+    # Take the node version from common
+    # If a local archive for node exists, we bundle that
+    NODE_TGZ_FILE="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
+    if [ -f "${CHECKOUT_DIR}/${NODE_TGZ_FILE}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${NODE_TGZ_FILE}"
+    elif [ -n "${NODE_TGZ}" ] : then
+        # if exists try to download node binary from nodejs
+        NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/${NODE_TGZ}"
+        echo "Downloading Node from ${NODE_URL}"
+        curl "${NODE_URL}" | tar zx --strip-components 1
     else
         # test for system installed binaries
         if [ -z "$(which node 2>/dev/null)" -o -z "$(which npm 2>/dev/null)" ] ; then
@@ -68,12 +73,11 @@ else
         ln -s "$(which npm 2>/dev/null)"  "$DIR/bin/npm"
     fi
 
-    # Take the version from meteor above
-    MONGO_VERSION=2.6.7
-    MONGO_BUILD_NUMBER=6
-    MONGO_TGZ="mongo_${PLATFORM}_v${MONGO_VERSION}.tar.gz"
-    if [ -f "${CHECKOUT_DIR}/${MONGO_TGZ}" ] ; then
-        tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ}"
+    # Take the mongo version from common
+    MONGO_TGZ_FILE="mongo_${PLATFORM}_v${MONGO_VERSION}.tar.gz"
+    # If a local archive for mongo exists, we bundle that
+    if [ -f "${CHECKOUT_DIR}/${MONGO_TGZ_FILE}" ] ; then
+        tar zxf "${CHECKOUT_DIR}/${MONGO_TGZ_FILE}"
     else
         # test for system installed binaries
         if [ -z "$(which mongo 2>/dev/null)" -o -z "$(which mongod 2>/dev/null)" ] ; then
