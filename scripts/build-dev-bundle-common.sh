@@ -7,6 +7,7 @@ UNAME=$(uname)
 ARCH=$(uname -m)
 NODE_VERSION=4.4.7
 NPM_VERSION=3.10.2
+MONGO_VERSION=3.2.6
 
 # save number of processors to define max parallelism for build processes
 # we call that via additional bash process to not get trapped on error
@@ -84,14 +85,7 @@ fi
 
 PLATFORM="${UNAME}_${ARCH}"
 
-# If using METEOR UNIVERSAL we can skip this test for NODE_TGZ
-if [ -n "$METEOR_UNIVERSAL_FLAG" ]
-then
-    # create unusable setting here just as a "Debug" output
-    # this will be normally overriden in generate-dev-bundle.sh when
-    # separate build of node is available by build-node-for-dev-bundle.sh
-    NODE_TGZ="when-using-meteor-universal-you-need-to-get-node-binaries-yourself_${PLATFORM}.tar.gz"
-elif [ "$UNAME" == "Linux" ]
+if [ "$UNAME" == "Linux" ]
 then
     if [ "$ARCH" == "i686" ]
     then
@@ -99,6 +93,22 @@ then
     elif [ "$ARCH" == "x86_64" ]
     then
         NODE_TGZ="node-v${NODE_VERSION}-linux-x64.tar.gz"
+    elif [ "$ARCH" == "armv8l" -o "$ARCH" == "aarch64" ]
+    then
+        NODE_TGZ="node-v${NODE_VERSION}-linux-arm64.tar.gz"
+    elif [ "$ARCH" == "armv7l" ]
+    then
+        NODE_TGZ="node-v${NODE_VERSION}-linux-armv7l.tar.gz"
+    elif [ "$ARCH" == "armv6l" ]
+    then
+        NODE_TGZ="node-v${NODE_VERSION}-linux-armv6l.tar.gz"
+    elif [ -n "$METEOR_UNIVERSAL_FLAG" ]
+    then
+      # If using METEOR UNIVERSAL we can skip this test for NODE_TGZ
+      # create unusable setting here just as a "Debug" output
+      # this will be normally overriden in generate-dev-bundle.sh when
+      # separate build of node is available by build-node-for-dev-bundle.sh
+      NODE_TGZ=""
     else
         echo "Unknown architecture: $UNAME $ARCH"
         exit 1
@@ -106,6 +116,19 @@ then
 elif [ "$UNAME" == "Darwin" ]
 then
     NODE_TGZ="node-v${NODE_VERSION}-darwin-x64.tar.gz"
+elif [ "$UNAME" = "FreeBSD" -o "$UNAME" = "OpenBSD" -o "$UNAME" = "NetBSD" ] ; then
+then
+    if [ -n "$METEOR_UNIVERSAL_FLAG" ]
+    then
+      # If using METEOR UNIVERSAL we can skip this test for NODE_TGZ
+      # create unusable setting here just as a "Debug" output
+      # this will be normally overriden in generate-dev-bundle.sh when
+      # separate build of node is available by build-node-for-dev-bundle.sh
+      NODE_TGZ=""
+    else
+        echo "Unknown architecture: $UNAME $ARCH"
+        exit 1
+    fi
 else
     echo "Unknown architecture: $UNAME $ARCH"
     exit 1
