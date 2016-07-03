@@ -116,7 +116,7 @@ then
 elif [ "$UNAME" == "Darwin" ]
 then
     NODE_TGZ="node-v${NODE_VERSION}-darwin-x64.tar.gz"
-elif [ "$UNAME" = "FreeBSD" -o "$UNAME" = "OpenBSD" -o "$UNAME" = "NetBSD" ] ; then
+elif [ "$UNAME" = "FreeBSD" -o "$UNAME" = "OpenBSD" -o "$UNAME" = "NetBSD" ]
 then
     if [ -n "$METEOR_UNIVERSAL_FLAG" ]
     then
