@@ -51,7 +51,7 @@ else
     NODE_TGZ_FILE="node_${PLATFORM}_v${NODE_VERSION}.tar.gz"
     if [ -f "${CHECKOUT_DIR}/${NODE_TGZ_FILE}" ] ; then
         tar zxf "${CHECKOUT_DIR}/${NODE_TGZ_FILE}"
-    elif [ -n "${NODE_TGZ}" ] : then
+    elif [ -n "${NODE_TGZ}" ] ; then
         # if exists try to download node binary from nodejs
         NODE_URL="https://nodejs.org/dist/v${NODE_VERSION}/${NODE_TGZ}"
         echo "Downloading Node from ${NODE_URL}"
